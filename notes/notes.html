@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<h1>LEARN ASSEMBLY IN 28 DAYS QUICK REFERANCE </h1>
+</head>
+
+<hr />
+
+<body>
+
+<a href = "#Day 3">Day 3: Registers, Memory, and Variables</a><br/>
+<a href = "#Day 4">Day 4: flags</a><br/>
+<a href = "#Day 5">Day 5: data manipulation</a><br/>
+<a href = "#Day 6">Day 6: $tack$</a><br/>
+<a href = "#Day 7">Day 7: control structures</a><br/>
+<a href = "#Day 8">Day 8: bit instructions</a><br/>
+<a href = "#Day 9">Day 9: bit shifting</a><br/>
+<a href = "#Day 10">Day 10: other registers</a><br/>
+<a href = "#Day 11">Day 11: displaying text</a><br/>
+<a href = "#Day 12">Day 12: key input</a><br/>
+
+<hr />
+
+<h3><a name = "Day 3">Day 3: Registers, Memory, and Variables</a></h3>
+-covers binary and hexadecimal</br>
+-nibble(4 bits), byte (8), word(16), dword(32), quadword(64)</br>
+-Prefixes: %[binary], $[hex], @[octal], no prefix for deci</br>
+-intro to registers:</br>
+
+<ul>
+<li>A - accumulator</br>
+<li>B - 8-bit counter</br>
+<li>C - hardware ports</br>
+<li>F - flags</br>
+<li>HL - 16 bit arithmetic and stores high/low bytes of a memory address</br>
+<li>BC - byte counter</br>
+<li>DE - holds address of a memory location that is a destination</br>
+<li>IX - like HL, less efficient
+</ul>
+
+-has table of valid arguments for the LD function, (reg) means the value stored at the address that is stored <br/> 
+in reg, (imm) means the value stored at imm (imm is a mem address), imm is an immediate value, a.k.a. a constant value<br/>
+-note: both args for ld cannot be 16bit regs<br/>
+
+<br/>
+<bold>Example:<bold><br/><code> 
+LD DE, Hl   ;is impossible<br/>	    
+LD D, H     ;then...<br/>
+LD E, L<br/>
+</code>
+<br/>
+
+-instruction <code>EX DE, HL</code> swaps the values of DE and HL<br/>
+*other operands can be used, see instruction set<br/>
+-adresses $0000 to $7FFF are rom, $8000 to $FFFF are ram<br/>
+- Equates: <code>symbol = literal</code> or <code>symbol .EQU literal</code><br/>
+- modules that can have local labels can be created by:<br/>
+<code>.MODULE   module_1<br/>
+Code here<br/>
+.MODULE    module_2</code><br/><br/>
+-Macros: <code>#define  symbol  literal</code><br/>
+<bold>Example:<bold><br/>
+<code>   #define    add_sto(reg, addr)   LD A, (addr)<br/>
+    #defcont                     \ ADD A, reg<br/>
+    #defcont                     \ LD (addr), A </code><br/><br/>
+-you can make variables by using .DB and .DW   
+*note that this just adds bytes (or words) to the pgrm, and you can use a label to access it<br/>
+<br/>
+<bold>Example:</bold><br/>
+<code>Var_x: .DW 1000</code><br/>
+and then use (Var_x) to get the value  ****remember that this is a label, dont forget the ':'<br/>
+-note that the above method makes your pgrm bigger, to solve this, you can use ram. You can create a ram var like so:<br/>
+<code>var .EQU AppBackUpScreen + 4</code> and access it with (var)<br/>
+*each adress stores a byte, so a 16 bit # will overwrite your address+1. therefore, put space in between variables<br/>
+-reminder that the following code is valid and useful:<br/>
+<code> LD DE, $4102    LD (DE), A </code> stores value at $4102 to A<br/>
+<br/>
+
+<h3><a name = "Day 4">Day 4: Flags</a></h3>
+
+-the F register Bits, flags, and description:<br/>
+
+0:<strong>C</strong> arry flag is like the P/V flag, but detects overflow with unsigned #s instead signed. <br/>
+If an add instruction caused an overflow (8 or 16bit reg) or a subtract instruction resulted in a negative #,<br/> 
+the flag is set.<br/>
+1:<strong>N</strong> flag detects whether the last instruction was add (reset) or subtract(set). <br/>
+Used with DAA instruction which is not covered because it is used exclusively with BCD<br/>
+2:<strong>P/V</strong> flag can detect overflow(set) (esp. with signed numbers) in an 8bit register. <br/>
+Can also detect parity - if number of 1's in the accumulator is even(set) or odd(reset). <br/>
+whether it shows parity or overflow depends on instruction <br/>
+3: - NULL<br/>
+4:<strong>H</strong> alf-carry flag functions exactly like the Carry flag except that overflow is detected <br/>
+in the least-sig nibble (hence *half*-carry). Used with DAA instruction (BCD) <br/>
+5: - NULL<br/>
+6:<strong>Z</strong> flag detects if last instruction cuased a register to equal 0 (set), otherwise it is reset<br/>
+7:<strong>S</strong> ign flag detects is accumulator is negative (set) or positive (reset)<br/>
+<br/>
+*** important instructions introduced (used in control structures):<br/>
+SCF - sets carry flag<br/>
+CCF - inverts carry flag<br/>
+<br/>
+
+<h3><a name = "Day 5">Day 5: Data Manipulation</a></h3>
+
+
+-covers zero extension (extending a number without changing the value). simple as: <code>LD DE, 0</code><br/>
+-some data manipulation instructions:<br/>
+INC <code> reg8 | reg16 | (HL) </code> = Adds one to the operand. <br/><br/>
+
+DEC <code> reg8 | reg16 | (HL) </code> = Subtracts one from the operand. <br/><br/>
+
+ADD A, <code> reg8 | imm8 | (HL) </code> = Adds to the accumulator. <br/><br/>
+
+ADD HL, reg16 = Adds to HL. <br/><br/>
+
+SUB <code> reg8 | imm8 | (HL) </code> = Subtracts from the accumulator. <br/><br/>
+
+SBC HL, reg16 = Subtracts reg16 and the carry flag from HL. <br/><br/>
+
+-talks about multiplying and dividing algorithms<br/>
+-***important note that since the z80 is a "little-endian processor", when you load a value in a 16bit<br/>
+reg to an address, the least-sig byte is loaded first<br/>
+<strong>Example:</strong><br/>
+<code>LD ($2315), HL</code> would load the value in L to the address $2315 and H in the address $2316. <br/>
+it makes sense because the lower byte is stored in the lower address. if  still confused, look at the diagrams.<br/>
+-talks about arrays. for 1d arrays just store a base address and use an offset. 2d arrays are complicated, dont use<br/>
+<br/>
+
+<h3><a name = "Day 6">Day 6: Stacks</a></h3>
+
+-this talks about how to manipulate the stack on the z80<br/>
+-a stack is a structure used to store data, and it does not have a fixed size. <br/>
+If a piece of data is in the middle of the stack, you cannot immediatly retreive it without displacing the data on top.<br/> 
+-to make a stack (not using the global one at $0000), you have to have a chunk of memory <br/>
+and a pointer to the top of the stack<br/>
+<strong>Example:</strong> Puts (pushes) the value in DE to the top of a stack that grows up (higher) in memory:<br/>
+<code>
+    LD     HL, (stack_ptr)    ; Load stack pointer<br/>
+    LD     (HL), E            ; Push the low-order byte<br/>
+    INC    HL                ; Move stack pointer to next byte of available space<br/>
+    LD     (HL), D            ; Push the high-order byte<br/>
+    INC    HL<br/>
+    LD     (stack_ptr), HL    ; Save new stack pointer<br/>
+</code><br/>
+<strong>Example:</strong> Take (pop) the top 16bit value in a stack into DE:<br/>
+<code>
+    LD     HL, (stack_ptr)<br/>
+    DEC    HL                ; Move stack pointer to next byte on stack<br/>
+    LD     D, (HL)            ; Pop the high-order byte<br/>
+    DEC    HL<br/>
+    LD     E, (HL)            ; Pop the low-order byte<br/>
+    LD     (stack_ptr), HL    ; Save new stack pointer<br/>
+</code><br/>
+*to change this to a stack that grows down, switch the INC and DEC instructions <br/>
+and remember for push to load the high-order byte first, and in pop to load the low-order <br/>
+bit first (remember little-endian) <br/><br/>
+
+<br/>-the z80 has its own stack that starts at $0000 and is composed of 400 bytes. You can use these instructions:
+PUSH reg16 - stores the value of ANY 16bit reg to stack<br/>
+POP reg16 - retreives a 16bit value to ANY 16bit register<br/>
+- SP is a 16bit register that is the Stack Pointer<br/>
+**** leave the hardware stack in the same state it was before your pgrm started, <br/>
+do not change anything (remember to POP everything you PUSHed). failure to do so = crash
+<br/>
+
+<h3><a name = "Day 7">Day 7: Control Structures</a></h3>
+
+-the basis of controlling what code is executed based on input and events is controled by jumps<br/>
+and labels (like the goto statement in C). Both of these statements jump:<br/>
+JP [label] - can jump anywhere in program or out, takes 10 clock cycles<br/>
+JR [label] - takes one less byte than JP, can only jump forward 129 or back 126 bytes. can take 7 to 12 clock cycles<br/><br/>
+-You can jump on a condition too, for if statements and logic:<br/>
+JP [condition], [label]<br/>
+JR [condition], [label]<br/>
+-These are the conditions (flags) that go with JR/JP:<br/>
+Z If the zero flag is set. <br/>
+NZ If the zero flag is reset. <br/>
+C If the carry flag is set. <br/>
+NC If the carry flag is reset. <br/>
+*** JR can only work with ^^^these, the following can be used with JP:<br/>
+PE If the parity/overflow flag is set. <br/>
+PO If the parity/overflow flag is reset. <br/>
+M If the sign flag is set. <br/>
+P If the sign flag is reset. <br/><br/>
+
+-another instructions that is used inconditionals is the CP instruction, <br/>
+which is the same as subtraction, but the accumulator doesn't change:<br/>
+CP <code> imm8 | reg8 | (HL) </code> = subtracts operand from A reg<br/>
+-by using both instructions, you can create logic:<br/>
+Comparison  Unsigned         Signed <br/>
+A == num    Z flag is set    Z flag is set<br/> 
+A != num    Z flag is reset  Z flag is reset <br/>
+A < num     C flag is set    S and P/V are different<br/> 
+A >= num    C flag is reset  S and P/V are the same <br/>
+
+-goes into algorithms for chaining conditionals, you can figure that out, along with loops<br/>
+-for For loops, the DJNZ instruction is introduced:<br/>
+DJNZ [label] -  Subtracts 1 from register B, and if it isn't zero, jumps to label.<br/>
+<br/>
+-finally, calls are introduced. Calls go to a label and  then return back to that point in the code with a RET<br/>
+CALL [label] - Causes execution to jump to label, returning when a RET instruction is executed. <br/>
+-this could be useful for a procedure or function that needs to be executed a lot. you could have something like:<br/>
+...code...<br/>
+CALL function<br/>
+...code...<br/>
+<br/>
+function:<br/>
+...stuff...<br/>
+RET<br/>
+<br/>
+
+<h3><a name = "Day 8">Day 8: Bit-Level Instructions</a></h3>
+
+-introduces the main logic functions of the z80, AND, OR. XOR, NOT. <br/>
+Remember that XOR is 1 if at least one input = 1 and one input = 0<br/>
+-Instructions:<br/>
+AND <code>reg8 | imm8 | (HL) </code>  = Bitwise AND on the accumulator<br/>
+OR <code>reg8 | imm8 | (HL) </code> = Bitwise OR on the accumulator <br/>
+XOR <code>reg8 | imm8 | (HL) </code> = Bitwise exclusive OR on the accumulator<br/>  
+CPL = Bitwise complement (NOT) of the accumulator <br/>
+<br/>
+-the next part goes over bit masking, or intentionally SETting or RESETing specific bits. Some tips:<br/>
+
++To set bits, use OR. For the mask, use 1 for each bit you want forced to be set, and 0 for the bits you want to preserve.<br/>
+
++To reset bits, use AND. For the mask, use 0 for each bit to reset, and 1 for each bit to ignore.<br/>
+
++To flip the state of a bit, use XOR. For the mask, use 1 for each bit to flip, and 0 for each bit to ignore<br/>
+
+***refer to examples given for more explanation<br/><br/>
+-then it talkes about uses for bitmasking, wierd stuff, the only use I see for it is monochrome graphics<br/>
+
+-Instructions to set/reset specific bits:<br/>
+SET n, <code>reg8 | (HL) </code> Sets bit n (0-7) of the operand.<br/> 
+RES n, <code>reg8 | (HL) </code> Resets bit n (0-7) of the operand. <br/>
+BIT n, <code>reg8 | (HL) </code> Checks bit n (0-7) of the operand. <br/>
+<br/> 
+These instructions can be useful, because they allow bitmasking without using the accumulator.<br/>
+
+-final topic is the IY register, which holds all of the operating system flags.<br/>
+You can use the above instructions to manipulate these flags
+<br/>
+
+<h3><a name = "Day 9">Day 9: Bit Shifting</a></h3>
+
+hahahhahahahahahahah stuffffff man
+
+<br/>
+
+<h3><a name = "Day 10">Day 10: The Other Registers</a></h3>
+
+
+lolololololololololololololollolololololololololololoyololol
+<br/>
+
+
+<h3><a name = "Day 11">Day 11: Displaying Text</a></h3>
+<p>
+- text position:
+(CurRow) - 0 to 7            </code> homescreen coordinates <br/> 
+(CurCol) - 0 to 15           </code><br/> 
+(PenCol) - 0 to 95     </code> graph coordinates<br/> 
+(PenRow) - 0 to 63     </code>      <br/> 
+<br/>  
+- Displaying large text:<br/> 
+_PutMap  = Displays a character at the current cursor position. <br/> 
+INPUT into reg A ASCII code of character to display. 
+<br/> 
+_PutC  = Displays a character at the current cursor position, and advances the cursor. <br/> 
+INPUT into reg A ASCII code of character to display. <br/> 
+*** note that the input can be <code> LD A, "O" </code>
+<br/> 
+<br/> 
+- b_call functions:<br/> 
+_NewLine Moves cursor to start of next line. (CurCol) = 0, (CurRow) is incremented (provided the display didn't scroll). <br/> 
+_HomeUp (CurCol) = 0, (CurRow) = 0. <br/> 
+<br/> 
+-Displaying strings:<br/> 
+_PutS = Display a null-terminated string starting at the current cursor position. <br/> 
+INPUT = HL Pointer to start of string. <br/> 
+OUTPUT = HL Address of byte after the null. <br/> 
+Remarks: If the string is longer than the current row, will wrap to next row. Will scroll display if necessary. Cursor postion set to postion after the last character in the string. <br/> 
+<br/> 
+-Displaying Small text:<br/> 
+_VPutMap = Displays a character at the current pen location. <br/> 
+INPUT = A ASCII code of character to display. <br/> 
+DESTROYS: All but BC and HL <br/> 
+<br/> 
+-Displaying small strings:<br/> 
+_VPutS = Displays a null-terminated string starting at the current pen location. <br/> 
+INPUT = HL Pointer to start of string.<br/>  
+OUTPUT = HL Address of byte after the null. <br/> 
+<br/> <br/> 
+-Displaying Numbers: display the value of HL in the large font <br/> 
+_DispHL = Displays the contents of the HL register right-justified in a field of five characters. <br/> For example, if HL = 125, output will be <space> <space> '1' '2' '5'. <br/> 
+INPUT = HL  Number to display. <br/> 
+DESTROYS = AF DE HL  <br/> 
+Remarks: String is cut-off at the screen's edge.<br/>  
+<br/>
+Text Shadow<br/> 
+TextShadow is a 128-byte block of RAM that stores a copy of every character written in the large font. The purpose of <br/> Text Shadow is so that the home screen is preserved when you enter any menus or the graph.<br/> 
+<br/> 
+- b_calls:<br/> 
+
+ _ClrScrnFull = Clears the screen and sets text shadow to all spaces. <br/> 
+DESTROYS = All <br/> 
+
+_ClrTxtShad = Sets text shadow to all spaces. <br/> 
+DESTROYS = BC DE HL <br/> 
+
+to stop PutS and PutC from writing to text shadow, reset the system flag AppTextSave at (IY + AppFlags) This will free up<br/>  text shadow for variable storage. You will then have to clear it when you exit, or you'll see junk on the screen. <br/> 
+<br/> 
+Formatting Text<br/> 
+
+Inverted Text:<br/> 
+If TextInverse, (IY + TextFlags) is set, text will appear in reverse video (white on black).<br/> 
+<br/> 
+Large Text:<br/> 
+When FracDrawLFont, (IY + FontFlags) is set, then any routine that normally uses the small font will instead use <br/> the large. The point here is to display large text that isn't confined to a 16×8 grid.<br/> 
+<br/> 
+Scrolling:<br/> 
+If you reset AppAutoScroll, (IY + AppFlags), the display  will not scroll when (CurRow) is greater than 7. The problem<br/>  is that you have to make sure to set (CurRow) to under 8 when you want to display text again, or it'll suck to be <br/> you.
+<br/>
+
+<h3><a name = "Day 12">Day 12: Key Input</a></h3>
+
+buncha b_calls n stuff:
+<br/> 
+_GetKey = Pauses the program until a key is pressed. <br/> 
+OUTPUT = A Key code of key pressed, or 0 if the [ON] key was pressed. <br/> 
+DESTROYS = BC DE HL <br/> 
+<br/> 
+_RunIndicOff = Deactivates the Run Indicator. <br/> 
+
+_GetCSC = Gets a key. Unlike GetKey, does not wait. <br/> 
+OUTPUT = A Scan code of key pressed, or 0 if no key was pressed. <br/> 
+DESTROYS = HL <br/> 
+</p>
+</body>
+</html>
+
