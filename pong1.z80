@@ -1,0 +1,163 @@
+.nolist
+#include "ti83plus.inc"
+#define    ProgStart    $9D95
+.list
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+
+Paddle_x:	.db	45	
+Paddle_y:	.db	59
+Ball_x:		.db	45
+Ball_y:		.db	00
+move_x:		.db	02
+move_y:		.db	02
+boolhoriz:	.db	01
+boolvert:	.db	01
+paddle:
+	.db "----", 0 	
+ghost:
+	.db "               ", 0
+ghost2:
+	.db "   ", 0
+	b_call(_RunIndicOff)
+	b_call(_ClrLCDFull)
+while:
+		
+	LD HL, (paddle_x)	;displays the paddle
+	LD (PenCol), HL
+	LD HL, (paddle_y)
+	LD (PenRow), HL
+	LD HL, paddle
+	b_call(_VPutS)		;displays the paddle 	
+
+	LD HL, (Ball_x)		;erases the ball
+	LD (PenCol), HL
+	LD HL, (Ball_y)
+	LD (PenRow), HL
+	LD HL, ghost2
+	b_call(_VPutS)		;erases the ball
+
+	LD HL, 0		;moves ball horizontally
+	LD HL, move_x	;moves move_x to HL
+	LD A, (boolhoriz)		
+	CP 1
+	JR Z, add1 	;checks if add
+	LD A, (Ball_x)
+	SUB (HL) 	;subtracts (move_x) from (Ball_x)
+	LD (Ball_x), A  ;stores value in A back to variable (Important!)
+	JR vertical
+add1:
+	LD A, (Ball_x)
+	ADD A, (HL)
+	LD (Ball_x), A		;moves ball horizontally
+
+vertical:
+	LD HL, 0		;moves ball vertically
+	LD HL, move_y
+	LD A, (boolvert)		
+	CP 1
+	JR Z, add2	;checks if add
+	LD A, (Ball_y)
+	SUB (HL)
+	LD (Ball_y), A	;stores value in A back into variable
+	JR finivert
+add2:
+	LD A, (Ball_y)
+	ADD A, (HL)
+	LD (Ball_y), A		;moves ball vertically
+finivert:
+	
+	LD HL, (Ball_x)		;displays the ball
+	LD (PenCol), HL
+	LD HL, (Ball_y)
+	LD (PenRow), HL
+	LD A, 'O'
+	b_call(_VPutMap)	;displays the ball
+
+;logicstarts here
+	LD HL, Paddle_x		;checks paddle coll
+	LD D, (HL)	;stores paddle_x in D
+	LD A, (Ball_x)	
+	CP D		
+	JR C, no_paddle_col ;if ball_x < paddle_x, no coll
+	LD A, D
+	ADD A, 16
+	LD D, A
+	LD A, (Ball_x)
+	CP D
+	JR NC, no_paddle_col ;if ball_x > paddle_x+w, no coll
+	LD A, (Ball_y)
+	CP 55
+	JR NC, no_paddle_col ;if ball_y < 55, no coll
+	;then there is a paddle/ball collision:
+	LD A, 0	
+	LD (boolvert), A ;ball goes up now
+	JR endlogic
+no_paddle_col:
+	LD A, (Ball_y)
+	CP 60
+	JR NC, theEnd	;if ball_y > 60, game over
+	CP 5 	
+	JR NC, nowall1	;if ball_y < 5...
+	LD A, 1
+	LD (boolvert), A;then ball goes down now
+nowall1:
+	LD A, (Ball_x)	;checks collision with left wall
+	CP 5
+	JR NC, nowall2 ;if Ball_x < 5...
+	LD A, 1
+	LD (boolhoriz), A
+nowall2:
+	CP 90		;checks collision with right wall
+	JR C, endlogic
+	LD A, 0
+	LD (boolhoriz), A
+endlogic:
+	b_call(_GetCSC) 	;gets key press
+	CP 0
+	JP Z, while 	;if no key press, goto start
+
+	CP skLeft
+	JR Z, GoLeft 	;checks left button
+	CP skRight
+	JR Z, GoRight 	;checks right button
+
+	CP kEnter	;checks if press enter>goto end
+	JR Z, theEnd
+
+	JP while	;end of game loop
+
+GoLeft:
+	LD HL, (paddle_x)	;erases the paddle
+	LD (PenCol), HL
+	LD HL, (paddle_y)
+	LD (PenRow), HL
+	LD HL, ghost
+	b_call(_VPutS)		;erases the paddle 		
+
+	LD HL, ghost
+	b_call(_VPutS)
+	LD A, (Paddle_x)
+	SUB 5
+	LD (Paddle_x), A
+	JP while
+GoRight:
+	LD HL, (paddle_x)	;erases the paddle
+	LD (PenCol), HL
+	LD HL, (paddle_y)
+	LD (PenRow), HL
+	LD HL, ghost
+	b_call(_VPutS)		;erases the paddle 	
+	
+	LD HL, ghost
+	b_call(_VPutS)
+	LD A, (Paddle_x)
+	ADD A, 5
+	LD (Paddle_x), A
+	JP while
+
+theEnd:
+	ret
+
+.end
+.end

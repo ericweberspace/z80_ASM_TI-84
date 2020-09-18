@@ -1,0 +1,428 @@
+
+;SYNTAX: double space between titles, ten '/' for subtitles, all functions are uppercase except b_calls
+;############# means a to-do or work-in-progress
+;variables: no name conventions. Procedures are capitalized 
+
+;////////////////////////////////////////////////////////////////////////////
+;BEGINNING OF TIC TAC TOE
+;////////////////////////////////////////////////////////////////////////////
+
+.nolist
+#include "ti83plus.inc"
+#define    ProgStart    $9D95
+.list
+.org    ProgStart - 2
+    .db    t2ByteTok, tAsmCmp
+
+;//////////////////////////////////////////////////////////////////////////////
+
+
+;//////////////////////////////////////////////////////////////////////////////
+;VARIABLE DECLARATION
+;//////////////////////////////////////////////////////////////////////////////
+
+;two bytes are assigned to player and  calc, each bit represents a spot on the board
+;for each bit, 1=occupied, 0=not occupied.
+
+Board_p .EQU AppBackUpScreen + 4
+Board_c .EQU AppBackUpScreen + 6
+
+;stores the number of wins/loses
+
+player_wins .EQU AppBackUpScreen + 9
+calc_wins .EQU AppBackUpScreen + 11
+
+;stores whos turn it is, 1=player, 0=calc
+
+whosturn .EQU AppBackUpScreen + 13
+
+
+;///////////////////////////////////////////////////////////////////////////////////
+
+
+;///////////////////////////////////////////////////////////////////////////////////
+;WELCOME SCREEN
+;///////////////////////////////////////////////////////////////////////////////////
+
+	b_call(_ClrLCDFull)
+	LD A, 0
+	LD (CurRow), A
+	LD (CurCol), A		;sets cursor positions to 0,0
+
+	LD HL, welcome
+	b_call(_PutS)		;displays welcome
+	
+	CALL Wait		;waits for keypress
+
+
+;///////////////////////////////////////////////////////////////////////////////////
+;START OF THE GAME
+;///////////////////////////////////////////////////////////////////////////////////
+
+	LD HL, 00
+	LD (Board_p), HL
+	LD (Board_c), HL
+	LD (player_wins), HL	
+	LD (calc_wins), HL	;sets varaibles to 0 for starting the program
+	LD HL, whosturn		;player starts the first game
+	LD (HL), 1
+	
+newgame:			;EVERY NEW GAME STARTS AT THIS LABEL
+
+	LD HL, 00
+	LD (Board_p), HL
+	LD (Board_c), HL	;the board is cleared for each new game
+
+;//////////START OF SCOREBOARD, is not overwritten until someone wins and a new game starts
+	
+	b_call(_ClrLCDFull)
+	LD A, 2
+	LD (CurRow), A
+	LD A, 12
+	LD (CurCol), A		;cursor set to the edge of the screen
+	LD HL, calc
+	b_call(_PutS)		;displays the title "CALC" for # of wins 
+	
+	LD A, 3
+	LD (CurRow), A
+	LD A, 10
+	LD (CurCol), A	
+	LD A, (calc_wins)
+	LD H, 0
+	LD L, A
+	b_call(_DispHL) 	;displays the number of calc wins
+
+	LD A, 5
+	LD (CurRow), A
+	LD A, 13
+	LD (CurCol), A		;cursor set to the edge of the screen
+	LD HL, you
+	b_call(_PutS) 		;displays the title "YOU" for # of wins
+	
+	LD A, 6
+	LD (CurRow), A
+	LD A, 10
+	LD (CurCol), A
+	LD A, (player_wins)
+	LD H, 0
+	LD L, A
+	b_call(_DispHL) 	;displays the # of player wins
+
+;//////////END OF SCORE BOARD
+
+
+;//////////DISPLAY THE BOARD
+
+	CALL DispBoard		;this is a procedure call that could be optimized to work more efficiently ????????
+	CALL Wait		;pauses the game a moment so player can see moves
+
+;NEW STRATEGY!!!!! SINCE THE BOARD WILL NOT BE ERASED UNTIL NEW GAME, CALL DISPBOARD ONCE, ^^^ ABOVE
+;THEN, INCLUDE THE TASK OF DISPLAING MOVES WITH THE OTHER FUNCTIONS BELOW, LIKE THE PART WHERE THE PROGRAM
+;CHECKS WHETHER THE PLAYER PRESSED A KEY, WHIHC KEY IT IS, AND THEN GOES TO CHECK AND MARK THAT SPACE...
+
+;//////////DONE DISPLAYING BOARD
+
+
+;//////////STARTS THE TURNS
+
+	LD HL, (whosturn)
+	LD A, L			;loads whosturn it is into, HL, and then reg L into A for conditional
+	CP 1
+	JR Z, playergoes
+	JR cpugoes		;note that after this, player and calc will just switch off each other for turns,
+				;meaning that the program wont came back here until a new game, so whosturn
+				;is really only used as 'who starts the game', which will be the loser of the previous game
+
+playergoes:
+
+;display instructions
+
+	b_call(_HomeUp) 
+	LD HL, clear
+	b_call(_PutS)		;clears previous instructions
+
+	b_call(_HomeUp)
+	LD HL, inst1
+	b_call(_PutS)		;displays player instructions
+	
+
+;##############choose space by pressing key, store a # to reg A and then check if space occupied
+
+;	LD A,0
+;wait3:	
+;	b_call(_GetKey)
+;	CP k1
+;	JR Z, key1
+;	CP k2
+;	JR Z, key2
+;	CP k3
+;	JR Z, key3
+;	CP k4
+;	JR Z, key4
+;	CP k5
+;	JR Z, key5
+;	CP k6
+;	JR Z, key6
+;	CP k7
+;	JR Z, key7
+;	CP k8
+;	JR Z, key8
+;	CP k9
+;	JR Z, key9
+;	JR wait3
+
+;##########check if Board_c occupys space, if not, Set Board_p 	
+
+	CALL Wait		;pause for player to see the move they made on the board
+
+
+;##########procedure call check if win
+
+cpugoes:
+
+
+;###########CHOOSE SPACE, RANDOM/AI
+
+
+;############procedure call check if win
+
+;############# goto nextTurn if someone hasn't won
+
+
+
+
+;////////////////////////////////////////////////////////////////
+;RETURN
+	ret
+
+;////////////////////////////////////////////////////////////////
+
+
+;////////////////////////////////////////////////////////////////
+;PROCEDURE CALLS
+;////////////////////////////////////////////////////////////////
+
+Wait:
+Strtwait:
+	b_call(_GetKey)
+	CP kEnter
+	JR NZ, Strtwait
+	ret		;waits for enter keypress
+
+DispBoard:
+	LD B, 11
+	LD A, 3
+	LD (CurRow), A
+	LD A, 0
+	LD (CurCol), A		;set cursor and b register
+strtmin1:
+	LD A, "-"
+	b_call(_PutC)		;displays minus sign and advances the cursor
+	DJNZ strtmin1		;puts 11 minus signs for every column on row 3
+	
+	LD B, 11
+	LD A, 5
+	LD (CurRow), A
+	LD A, 0
+	LD (CurCol), A		;sets cursor and b register
+strtmin2:
+	LD A, "-"
+	b_call(_PutC)		;displays minus sign
+	DJNZ B, strtmin2	;puts 11 minus signs for every column on row 5
+	
+	LD A, 1
+	LD (CurRow), A
+	LD A, 3
+	LD (CurCol), A		;set cursor and b register
+	LD D, 1
+	LD B, 7			;reg D stores the row # and reg B is used for counting down the loop
+colum1:
+	LD A, "I"
+	b_call(_PutMap)		;displays 7 'I's for column 3	
+	LD A, D
+	INC A
+	LD (CurRow), A
+	LD D, A			;stores the row # from reg D in A, increase row, and stores it back in D
+	DJNZ B, strtmin2	;does not advance the cursor (putmap)
+
+	LD A, 1
+	LD (CurRow), A
+	LD A, 7
+	LD (CurCol), A		;set cursor and b register
+	LD D, 1
+	LD B, 7			;reg D stores the row # and reg B is used for counting down the loop
+colum1:
+	LD A, "I"
+	b_call(_PutMap)		;displays 7 'I's for column 7	
+	LD A, D
+	INC A
+	LD (CurRow), A
+	LD D, A			;stores the row # from reg D in A, increase row, and stores it back in D
+	DJNZ B, strtmin2	;does not advance the cursor (putmap)
+
+;done displaying the perimeter of the board, now to display moves...
+;checks for player moves (Xs)
+	LD HL, Board_p
+	BIT 0, (HL)
+	JR NZ, nex1
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex1:
+	BIT 1, (HL)
+	JR NZ, nex2
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex2:
+	BIT 2, (HL)
+	JR NZ, nex3
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex3:
+	BIT 3, (HL)
+	JR NZ, nex4
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex4:
+	BIT 4, (HL)
+	JR NZ, nex5
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex5:
+	BIT 5, (HL)
+	JR NZ, nex6
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex6:
+	BIT 6, (HL)
+	JR NZ, nex7
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex7:
+	BIT 7, (HL)
+	JR NZ, nex8
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+nex8:
+	LD HL, Board_p + 1		;goes to next byte for 9th bit
+	BIT 0, (HL)
+	JR NZ, nex9
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutX
+
+;goes to CALC byte for moves
+nex9:
+	LD HL, Board_c	
+	BIT 0, (HL)
+	JR NZ, nex10
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex10:	
+	BIT 1, (HL)
+	JR NZ, nex11
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex11:	
+	BIT 2, (HL)
+	JR NZ, nex12
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex12:	
+	BIT 3, (HL)
+	JR NZ, nex13
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex13:	
+	BIT 4, (HL)
+	JR NZ, nex14
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex14:	
+	BIT 5, (HL)
+	JR NZ, nex15
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex15:	
+	BIT 6, (HL)
+	JR NZ, nex16
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex16:	
+	BIT 7, (HL)
+	JR NZ, nex17
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO
+nex17:	
+	LD HL, Board_c + 1
+	BIT 0, (HL)
+	JR NZ, nex18
+	LD A, ##ROW
+	LD E, ##COL
+	CALL PutO	
+nex18:	
+	;done displaying the board and moves
+	ret
+
+PutX:
+	LD (CurRow), A
+	LD A, E
+	LD (CurCol), A
+	LD A, 'X'
+	b_call(_PutMap)		;displays x at coordinate specified by reg A and E before CALL to procedure
+	ret			
+PutO:	
+	LD (CurRow), A
+	LD A, E
+	LD (CurCol), A
+	LD A, 'O'
+	b_call(_PutMap)		;displays O at coordinate specified by reg A and E before CALL to procedure
+	ret	
+
+
+;////////////////////////////////////////////////////////////////
+;STRINGS TO BE USED IN THE GAME
+;////////////////////////////////////////////////////////////////
+
+;beginning remarks
+welcome:
+	.db "WELCOME TO      TICTACTOE!      YOU ARE X, THE  CALC IS O", 0
+
+;some instructions
+inst1:	
+	.db "CHOOSE A SPACE", 0
+inst2:
+	.db "CALC'S TURN", 0
+inst3:
+	.db "YOU WIN!", 0
+inst4:
+	.db "YOU LOSE", 0
+you:
+	.db "YOU", 0
+calc:
+	.db "CALC", 0
+clear:		
+	.db "           ", 0
+
+
+;////////////////////////////////////////////////////////////////
+;END STRINGS
+;////////////////////////////////////////////////////////////////
+
+.end
+.end

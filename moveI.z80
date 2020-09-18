@@ -1,0 +1,64 @@
+.nolist
+#include "ti83plus.inc"
+#define    ProgStart    $9D95
+.list
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	b_call(_RunIndicOff)
+	b_call(_ClrLCDFull)
+	LD A, 0
+	LD (CurRow), A
+	LD (CurCol), A
+while:
+	LD A, 'I'
+	b_call(_PutMap) ;displays 'I' 	
+
+	b_call(_GetKey) ;gets key press
+	CP 0
+	JR Z, while ;if no key press, goto start of loop
+	CP kUp
+	JR Z, GoUp ;checks up button
+	CP kDown
+	JR Z, GoDown ;checks down button
+	CP kLeft
+	JR Z, GoLeft ;checks left button
+	CP kRight
+	JR Z, GoRight ;checks right button
+	
+	CP kEnter
+	JR Z, theEnd
+	JR while
+GoUp:
+	LD A, ' '
+	b_call(_PutMap)
+	LD A, (CurRow)
+	DEC A
+	LD (CurRow), A
+	JR while
+GoDown:
+	LD A, ' '
+	b_call(_PutMap)
+	LD A, (CurRow)
+	INC A
+	LD (CurRow), A
+	JR while
+GoLeft:
+	LD A, ' '
+	b_call(_PutMap)
+	LD A, (CurCol)
+	DEC A
+	LD (CurCol), A
+	JR while
+GoRight:
+	LD A, ' '
+	b_call(_PutMap)
+	LD A, (CurCol)
+	INC A
+	LD (CurCol), A
+	JR while	
+
+theEnd:
+	ret
+
+.end
+.end

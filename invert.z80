@@ -1,0 +1,17 @@
+.nolist
+#include "ti83plus.inc"
+#define    ProgStart    $9D95
+.list
+.org    ProgStart - 2
+.db    t2ByteTok, tAsmCmp
+
+	BIT 3, (IY + 5)		;checks inverse flag
+	JR Z, set_it		;if not set, set it
+	RES 3, (IY + 5)		;if set, then reset and end
+	JR done
+set_it:
+	SET 3, (IY + 5)		;sets text = inverse
+done:
+	ret
+.end
+.end
